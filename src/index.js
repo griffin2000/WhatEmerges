@@ -140,7 +140,7 @@ async function init() {
       frameIdx++;
 
       //Update every 0.5s (should be faster but emscripten performance bug means that would blow up the command queue)
-      setTimeout( updateVolume, 500 );
+      setTimeout( updateVolume, 50 );
 
     }
 
