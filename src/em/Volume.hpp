@@ -13,6 +13,7 @@ public:
         data.resize(w*h*d);
     }
 
+    // Get size in bytes
     size_t getSizeBytes() const {
         return data.size() * sizeof(VolumeDataType);
     }
