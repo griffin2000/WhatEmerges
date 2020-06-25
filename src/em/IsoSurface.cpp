@@ -1,16 +1,16 @@
 #include "IsoSurface.hpp"
 #include "Volume.hpp"
-#include "include/dualmc.h"
+#include "third-party/dualmc.h"
 
 
 bool IsoSurface::build(const Volume16*vol, uint16_t iso) {
 
     dualmc::DualMC<uint16_t> builder;
-
     
     std::vector<dualmc::Vertex> vertices;
     std::vector<dualmc::Quad> quads;
 
+    //Build the iso-surface using Dual Marching Cubes algorithm
     builder.build(
         vol->getDataPointer(), 
         vol->getWidth(), 
@@ -19,23 +19,27 @@ bool IsoSurface::build(const Volume16*vol, uint16_t iso) {
         iso, true, false, vertices, quads);
 
 
+    //Clear any existing data
     mIndices.clear();
     mPosition.clear();
     mNormal.clear();
 
+    //Set the indices and vertex vector
     mIndices.resize(quads.size()*6);
     mNormal.resize(vertices.size());
     std::vector<float> nv(vertices.size());
     
-    for(size_t i=0;i<quads.size();i++) {
 
+    for(size_t i=0;i<quads.size();i++) {
+       //Dual MC produces quads, convert to triangless
        mIndices[i*6+0] = quads[i].i0;
        mIndices[i*6+1] = quads[i].i1;
-       mIndices[i*6+2] = quads[i].i3;
+       mIndices[i*6+2] = quads[i].i3;//Indices are flipped
        mIndices[i*6+3] = quads[i].i1;
        mIndices[i*6+4] = quads[i].i2;
        mIndices[i*6+5] = quads[i].i3;
 
+       //Compute normals for all adjacent faces
        float3 qv[6];
        for(int j=0;j<6;j++) {
            int vi=mIndices[i*6+j];
@@ -50,6 +54,7 @@ bool IsoSurface::build(const Volume16*vol, uint16_t iso) {
        n0=cross(e0,e1);
        n1=cross(e2,e3);
 
+       //Sum the normals
        for(int j=0;j<6;j++) {
            
             int vi=mIndices[i*6+j];
@@ -64,14 +69,15 @@ bool IsoSurface::build(const Volume16*vol, uint16_t iso) {
 
     }
 
-
+    //Normalize the normals
     for(size_t i=0;i< nv.size();i++) {
         mNormal[i]/=nv[i];
         mNormal[i] = normalize(mNormal[i]);
     }
 
+    //Copy the position data
     float3 * vd = (float3*)&vertices[0];
-    int vn= vertices.size();
+    size_t vn= vertices.size();
     
     mPosition = std::vector<float3>(vd, vd+vn);
 

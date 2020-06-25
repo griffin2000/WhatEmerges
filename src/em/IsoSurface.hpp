@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <vector>
 
-#include "include/linalg/linalg.h"
+#include "third-party/linalg/linalg.h"
 
 using namespace linalg::aliases;
 
