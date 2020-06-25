@@ -1,0 +1,17 @@
+{
+  "name": "what-emerges",
+  "version": "1.0.0",
+  "description": "3D art project based on iso-surfaces",
+  "main": "src/index.js",
+  "dependencies": {
+    "express": "^4.17.1",
+    "three": "^0.116.0",
+    "webpack": "^4.31.0"
+  },
+  "devDependencies": {
+    "webpack-cli": "^3.3.11"
+  },
+  "scripts": {},
+  "author": "Gareth Morgan",
+  "license": "MIT"
+}
