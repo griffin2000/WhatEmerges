@@ -1,5 +1,5 @@
-// EM.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
+
+// Simple native test of emscripten interface
 
 #include <iostream>
 #include "../main.hpp"
@@ -14,7 +14,6 @@ using namespace linalg::aliases;
 #include <ratio>
 #include <chrono>
 
-//Simple native test of emscripten interface
 int main()
 {
 	using namespace std::chrono;
