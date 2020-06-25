@@ -1,17 +1,16 @@
+//Main front-end file that renders to canvas 
 import * as THREE from 'three';
 import { BufferAttribute } from 'three';
 
   
-  async function init() {
+async function init() {
 
+    //Start the iso-surface thread
     var worker = new Worker('/dist/createIsoThread.js');
-
-   
-
-    //var loader = new GLTFLoader();
 
     var camera, scene, renderer;
   
+    //Create a camera
     camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 10000 );
     camera.position.x = 32;
     camera.position.y = 32;
@@ -20,6 +19,7 @@ import { BufferAttribute } from 'three';
     scene = new THREE.Scene();
 
 
+    //Create a THREE renderer from canvas
     const canvas = document.getElementById("canvas");
     
     renderer = new THREE.WebGLRenderer( { antialias: true, canvas } );
@@ -27,9 +27,7 @@ import { BufferAttribute } from 'three';
     renderer.setSize( window.innerWidth, window.innerHeight );
     renderer.setClearColor ( new THREE.Color(0x2222aa));
 
-    const annotVals = [];
-    //scene.add(mesh);
-
+    //Handle window resizes
     window.addEventListener( 'resize', onWindowResize, false );
 
     function onWindowResize() {
@@ -42,9 +40,17 @@ import { BufferAttribute } from 'three';
     }
 
 
+    //Add lights
     var light = new THREE.HemisphereLight( 0xffffbb, 0x080820, 0.1 );
     scene.add( light );
     var directionalLight = new THREE.DirectionalLight( 0xffffff);
+    scene.add( directionalLight.target );
+    directionalLight.target.position.x = 0.0;
+    directionalLight.target.position.y = 0.0;
+    directionalLight.target.position.z = -100.0;
+    scene.add( directionalLight );
+
+    //Add the iso-surface mesh (initially just a single quad)
     const pos = new Float32Array([
       -1,-1,0,
       +1,-1,0,
@@ -68,23 +74,18 @@ import { BufferAttribute } from 'three';
     geom.setAttribute("normal", new THREE.Float32BufferAttribute(norm, 3, true));
     geom.computeBoundingBox();
 
-
+    //Just plain red material for now
     const mtl =  new THREE.MeshStandardMaterial({
       color:0xff0000,
       side: THREE.DoubleSide,
       //wireframe:true,
     })
-    const sphere = new THREE.Mesh(
+    const isosurface = new THREE.Mesh(
       geom,
-     mtl,
+      mtl,
     );
-    scene.add(sphere);
+    scene.add(isosurface);
 
-    scene.add( directionalLight.target );
-    directionalLight.target.position.x = 0.0;
-    directionalLight.target.position.y = 0.0;
-    directionalLight.target.position.z = -100.0;
-    scene.add( directionalLight );
 
     async function animate() {
   
@@ -95,9 +96,13 @@ import { BufferAttribute } from 'three';
   
     }
 
+
+    //Update the volume via the worker thread
     let frameIdx =0;
     function updateVolume() {
 
+
+      //Rotate a spherical region around the volume, setting values as you go
       const regionDim = 8;
       const regionDim2 = regionDim/2;
       const r = 25;
@@ -110,14 +115,19 @@ import { BufferAttribute } from 'three';
       const y = ~~(cy + vr * Math.sin(frameIdx*0.1));
       const z = ~~(cz + vr * Math.sin(frameIdx*0.02));
 
+      //Send kernel to the worker thread
       worker.postMessage({
         regionStart:new THREE.Vector3(x-regionDim2,y-regionDim2,z),
         regionSize:new THREE.Vector3(regionDim,regionDim,regionDim),
         kernel: `
+
+        //Calculate middle of volume
         v0.copy(localDims);
         v0.multiplyScalar(0.5);
+        //Get distance from middle of volume
         v1.subVectors(localCoord, v0);
         
+        //Get inverse of distance to center (clamped by region size)
         let v = v1.length()/${regionDim2};
         v = Math.min(v,1.0);
         v = 1.0-v;
@@ -128,9 +138,8 @@ import { BufferAttribute } from 'three';
       });
 
       frameIdx++;
-      if(frameIdx>30) {
-        mtl.wireframe=true;
-      }
+
+      //Update every 0.5s (should be faster but emscripten performance bug means that would blow up the command queue)
       setTimeout( updateVolume, 500 );
 
     }
@@ -138,9 +147,11 @@ import { BufferAttribute } from 'three';
     updateVolume();
     animate();
 
+    //Receive message from worker thread
     worker.addEventListener('message', function(e) {  
 
-      
+
+      //Update the geometry based on the iso-surface vertex and index data received from thread
       const msg = e.data;
       console.log("Received "+msg.indCount+" indices")
       const buffer = msg.buffer;
