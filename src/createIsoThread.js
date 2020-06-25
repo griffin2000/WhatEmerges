@@ -68,7 +68,7 @@ DC().then((mod)=>{
 
         //Get the vertex and index data from emscripten
         const vertPtr = mod._getIsoSurfacePosition(isoPtr);
-        const normPtr = mod._getIsoSurfacePosition(isoPtr);
+        const normPtr = mod._getIsoSurfaceNormal(isoPtr);
         const vertCount = mod._getIsoSurfaceVertexCount(isoPtr)*3;
         const indPtr = mod._getIsoSurfaceIndices(isoPtr);
         const indCount = mod._getIsoSurfaceIndexCount(isoPtr);
@@ -134,7 +134,7 @@ self.addEventListener('message', function(e) {
     }
     const addVolumeValue = (coord, floatVal)=>{
       const idx=coord.x + coord.y * globalDims.x + coord.z * globalDims.x * globalDims.y; 
-      volume[idx] += Math.min(~~(floatVal*0xffff), 0xffff);
+      volume[idx] = Math.min(volume[idx]+~~(floatVal*0xffff), 0xffff);
     }
     for(let i=0;i<regionSize.x && i<globalDims.x-regionStart.x;i++) {
       for(let j=0;j<regionSize.y  && j<globalDims.y-regionStart.y;j++) {

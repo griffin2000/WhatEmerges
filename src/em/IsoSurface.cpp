@@ -16,7 +16,12 @@ bool IsoSurface::build(const Volume16*vol, uint16_t iso) {
         vol->getWidth(), 
         vol->getHeight(), 
         vol->getDepth(), 
-        iso, true, false, vertices, quads);
+        iso, 
+        true, //Create manifold
+        false,//Don't create triange soup (create connected mesh)
+        vertices, 
+        quads);
+
 
 
     //Clear any existing data
