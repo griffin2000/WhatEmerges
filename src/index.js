@@ -12,9 +12,9 @@ async function init() {
   
     //Create a camera
     camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 10000 );
-    camera.position.x = 32;
-    camera.position.y = 32;
-    camera.position.z = 100;
+    camera.position.x = 64;
+    camera.position.y = 64;
+    camera.position.z = 300;
 
     scene = new THREE.Scene();
 
@@ -103,21 +103,23 @@ async function init() {
 
 
       //Rotate a spherical region around the volume, setting values as you go
-      const regionDim = 8;
+      const regionDim = 16;
       const regionDim2 = regionDim/2;
-      const r = 25;
-      const cx = 32;
-      const cy = 32;
-      const cz = 32;
-      const vr = r * Math.abs(Math.sin(frameIdx*0.02));
+      const r = 50;
+      const cx = 64;
+      const cy = 64;
+      const cz = 64;
+      const vr = r * Math.abs(Math.sin(frameIdx*0.08));
 
       const x = ~~(cx + vr * Math.cos(frameIdx*0.1));
       const y = ~~(cy + vr * Math.sin(frameIdx*0.1));
       const z = ~~(cz + vr * Math.sin(frameIdx*0.02));
 
+      const falloff = 2+regionDim2*Math.abs(Math.sin(frameIdx*0.1));
+
       //Send kernel to the worker thread
       worker.postMessage({
-        regionStart:new THREE.Vector3(x-regionDim2,y-regionDim2,z),
+        regionStart:new THREE.Vector3(x-regionDim2,y-regionDim2,z-regionDim2),
         regionSize:new THREE.Vector3(regionDim,regionDim,regionDim),
         kernel: `
 
@@ -128,7 +130,7 @@ async function init() {
         v1.subVectors(localCoord, v0);
         
         //Get inverse of distance to center (clamped by region size)
-        let v = v1.length()/${regionDim2};
+        let v = v1.length()/${falloff};
         v = Math.min(v,1.0);
         v = 1.0-v;
   

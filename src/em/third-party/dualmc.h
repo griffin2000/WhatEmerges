@@ -184,8 +184,10 @@ private:
     
     /// Functor for dual point key hash generation
     struct DualPointKeyHash {
-        size_t operator()(DualPointKey const & k) const {
-            return size_t(k.linearizedCellID) | (size_t(k.pointCode) << 32u);
+        size_t operator()(DualPointKey const& k) const {
+            //This is hash approach vastly faster on emscripten
+            uint64_t combinedIndex = uint64_t(k.linearizedCellID) | (uint64_t(k.pointCode) << 32u);
+            return std::hash<uint64_t>{}(combinedIndex);
         }
     };
     

@@ -12,10 +12,9 @@ DC().then((mod)=>{
 
  
     console.time("alloc volume");
-    //Hard coded 64x64x64 volume (due to emscripten bug performance is still an issue)
-    const w = 64;
-    const h = 64;
-    const d = 64;
+    const w = 128;
+    const h = 128;
+    const d = 128;
           
     //Create the volume (value returned is raw emscripten int, just an offset into emscripten heap)
     const vol =mod._createVolume(w,h,d);
